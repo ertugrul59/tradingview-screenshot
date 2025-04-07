@@ -4,6 +4,7 @@ from selenium.webdriver.chrome.options import Options
 import time
 import subprocess
 import re
+import platform
 
 def capture_tradingview_screenshot(ticker='NONE'):
     # Login to TradingView
@@ -16,8 +17,8 @@ def capture_tradingview_screenshot(ticker='NONE'):
     chrome_options.add_argument("--window-size=1280,720")
     
     driver = webdriver.Chrome(options=chrome_options)
-    
-    url = "https://in.tradingview.com/chart/NRGn9VUO/?symbol=" + str(ticker)
+    # https://www.tradingview.com/chart/LuDjaV3K/
+    url = "https://in.tradingview.com/chart/LuDjaV3K/?symbol=" + str(ticker)
     
     # Navigate to the URL
     driver.get(url)
@@ -29,8 +30,11 @@ def capture_tradingview_screenshot(ticker='NONE'):
     ActionChains(driver).key_down(Keys.ALT).key_down('s').key_up(Keys.ALT).key_up('s').perform()
     time.sleep(10)
     
-    # Use xclip to get the clipboard content
-    clipboard = subprocess.check_output(['xclip', '-o']).decode('utf-8')     
+    # Use pbpaste for macOS clipboard content
+    if platform.system() == 'Darwin':  # macOS
+        clipboard = subprocess.check_output(['pbpaste']).decode('utf-8')
+    else:  # Linux
+        clipboard = subprocess.check_output(['xclip', '-o']).decode('utf-8')
     
     time.sleep(5)    
         
@@ -42,8 +46,9 @@ def quit_browser(driver):
     driver.quit()
 
 # Example usage:
-clipboard_data = capture_tradingview_screenshot("NSE:APOLLOTYRE")
-print(clipboard_data)
+clipboard_data = capture_tradingview_screenshot("BYBIT:BTCUSDT.P")
+# https://in.tradingview.com/chart/LuDjaV3K/?symbol=NSE:APOLLOTYRE
+print('ertu:', clipboard_data)
 
 def convert_tradingview_links(input_string):
     # Define a regex pattern to find links of the format 'https://www.tradingview.com/x/...'

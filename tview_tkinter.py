@@ -17,7 +17,7 @@ def capture_tradingview_screenshot(ticker='NONE'):
     
     driver = webdriver.Chrome(options=chrome_options)
     
-    url = "https://in.tradingview.com/chart/NRGn9VUO/?symbol=" + str(ticker)
+    url = "https://in.tradingview.com/chart/LuDjaV3K/?symbol=" + str(ticker)
     
     # Navigate to the URL
     driver.get(url)
@@ -42,8 +42,8 @@ def quit_browser(driver):
     driver.quit()
 
 # Example usage:
-clipboard_data = capture_tradingview_screenshot("NSE:APOLLOTYRE")
-print(clipboard_data)
+clipboard_data = capture_tradingview_screenshot("BYBIT:BTCUSDT.P")
+print('ertu:', clipboard_data)
 
 def convert_tradingview_links(input_string):
     # Define a regex pattern to find links of the format 'https://www.tradingview.com/x/...'
