@@ -7,16 +7,22 @@ import re
 import platform
 import json
 from tkinter import Tk
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 
 def capture_tradingview_screenshot(ticker='NONE'):
     # Login to TradingView
     chrome_options = Options()
-    #chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--force-dark-mode')
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--window-size=1280,720")
+    chrome_options.add_argument('--blink-settings=imagesEnabled=false')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--disable-software-rasterizer')
     
     driver = webdriver.Chrome(options=chrome_options)
     # https://www.tradingview.com/chart/LuDjaV3K/
@@ -25,55 +31,51 @@ def capture_tradingview_screenshot(ticker='NONE'):
     # Navigate to the URL
     driver.get(url)
 
-    # Wait for a few seconds for the new page to load
-    time.sleep(10)
-  
-    print('Chart is ready for capture')
+    # Wait for iframe with explicit wait instead of sleep
+    wait = WebDriverWait(driver, 10)
+    iframe = wait.until(
+        EC.presence_of_element_located(("css selector", "iframe[id^='tradingview_']"))
+    )
     
     try:
-        # Find iframe that starts with "tradingview_"
-        iframes = driver.find_elements("css selector", "iframe[id^='tradingview_']")
-        if iframes:
-            iframe = iframes[0]  # Get the first matching iframe
-            # Click on the iframe first
-            ActionChains(driver).move_to_element(iframe).click().perform()
-            print("Clicked on iframe")
-            
-            # Switch to the iframe
-            driver.switch_to.frame(iframe)
-            print("Switched to TradingView iframe")
-            
-            # Wait a bit for iframe to be fully focused
-            time.sleep(2)
-            
-            # Send the keyboard shortcut
-            ActionChains(driver)\
-                .key_down(Keys.ALT)\
-                .send_keys('s')\
-                .key_up(Keys.ALT)\
-                .perform()
-            
-            print('Attempted to capture screenshot')
-            
-            # Switch back to main content
-            driver.switch_to.default_content()
+        # Click and switch to iframe
+        ActionChains(driver).move_to_element(iframe).click().perform()
+        driver.switch_to.frame(iframe)
+        
+        # Reduce wait time
+        time.sleep(1)  # Short pause for iframe focus
+        
+        ActionChains(driver)\
+            .key_down(Keys.ALT)\
+            .send_keys('s')\
+            .key_up(Keys.ALT)\
+            .perform()
+        
+        driver.switch_to.default_content()
+        
+        # Wait for clipboard content with timeout
+        max_attempts = 10
+        clipboard_content = None
+        for _ in range(max_attempts):
+            try:
+                clipboard_content = Tk().clipboard_get()
+                if clipboard_content:
+                    break
+            except:
+                time.sleep(1)
+                continue
+        
+        if clipboard_content:
+            quit_browser(driver)
+            return clipboard_content
         else:
-            print("No TradingView iframe found")
+            raise Exception("Failed to get clipboard content")
             
     except Exception as e:
         print(f"Error: {str(e)}")
         driver.switch_to.default_content()
-
-    time.sleep(10)
-    
-    # Use xclip to get the clipboard content
-    clipboard = Tk().clipboard_get()
-    
-    time.sleep(5)    
-        
-    quit_browser(driver)
-
-    return clipboard
+        quit_browser(driver)
+        return None
 
 def quit_browser(driver):
     driver.quit()
