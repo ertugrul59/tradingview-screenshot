@@ -5,10 +5,13 @@ from tkinter import Tk
 import platform as sys_platform
 import os
 
-def capture_tradingview_screenshot(ticker='NONE'):
+def capture_tradingview_screenshot(ticker='NONE', browser_type='chromium'):
     with sync_playwright() as p:
+        # Select browser type based on parameter
+        browser_launcher = getattr(p, browser_type.lower())
+        
         # Launch browser with appropriate options
-        browser = p.chromium.launch(
+        browser = browser_launcher.launch(
             headless=False,
             args=[
                 '--no-sandbox',
@@ -55,6 +58,9 @@ def capture_tradingview_screenshot(ticker='NONE'):
                 
                 # Wait to ensure iframe has focus
                 page.wait_for_timeout(2000)
+
+
+                # time.sleep(10000000)
                 
                 # Send Alt+S keyboard shortcut
                 print("Sending Alt+S keyboard shortcut...")

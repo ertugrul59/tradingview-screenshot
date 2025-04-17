@@ -32,6 +32,7 @@ def capture_tradingview_screenshot(ticker='NONE'):
     try:
         # Find iframe that starts with "tradingview_"
         iframes = driver.find_elements("css selector", "iframe[id^='tradingview_']")
+        print('iframes',iframes)
         if iframes:
             iframe = iframes[0]  # Get the first matching iframe
             # Click on the iframe first
@@ -43,14 +44,10 @@ def capture_tradingview_screenshot(ticker='NONE'):
             print("Switched to TradingView iframe")
             
             # Wait a bit for iframe to be fully focused
-            time.sleep(2)
+            time.sleep(10)
             
             # Send the keyboard shortcut
-            ActionChains(driver)\
-                .key_down(Keys.ALT)\
-                .send_keys('s')\
-                .key_up(Keys.ALT)\
-                .perform()
+            ActionChains(driver).key_down(Keys.ALT).key_down('s').key_up(Keys.ALT).key_up('s').perform()
             
             print('Attempted to capture screenshot')
             
@@ -71,7 +68,7 @@ def capture_tradingview_screenshot(ticker='NONE'):
     else:  # Linux
         clipboard = subprocess.check_output(['xclip', '-o']).decode('utf-8')
     
-    time.sleep(5)    
+    time.sleep(10)    
         
     quit_browser(driver)
 

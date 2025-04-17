@@ -14,7 +14,7 @@ from selenium.webdriver.common.by import By
 def capture_tradingview_screenshot(ticker='NONE'):
     # Login to TradingView
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--force-dark-mode')
@@ -94,7 +94,7 @@ def convert_coinglass_response(response_string):
     return response_string
 
 # Example usage:
-clipboard_data = capture_tradingview_screenshot("Binance_RAREUSDT")
+clipboard_data = capture_tradingview_screenshot("Binance_BTCUSDT")
 print('Raw response:', clipboard_data)
 # https://www.coinglass.com/tv/Binance_RAREUSDT
 
