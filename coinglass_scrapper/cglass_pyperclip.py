@@ -14,7 +14,7 @@ from selenium.webdriver.common.by import By
 
 def capture_tradingview_screenshot(ticker='NONE'):
     chrome_options = Options()
-    #chrome_options.add_argument('--headless') # Keep headless commented for debugging if needed
+    chrome_options.add_argument('--headless') # Keep headless commented for debugging if needed
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--force-dark-mode')
@@ -46,7 +46,7 @@ def capture_tradingview_screenshot(ticker='NONE'):
 
             driver.switch_to.default_content()
 
-            max_attempts = 20 
+            max_attempts = 5 
             wait_interval = 1 
             for attempt in range(max_attempts):
                 print(f'Attempting to get clipboard content (attempt {attempt + 1}/{max_attempts})...')
