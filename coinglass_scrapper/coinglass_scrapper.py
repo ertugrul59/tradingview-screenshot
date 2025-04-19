@@ -69,6 +69,25 @@ class CoinglassScraper:
             logging.error(f"Failed to navigate to {url}: {e}")
             raise CoinglassScraperError(f"Navigation to {url} failed") from e
 
+    def _set_timeframe(self, timeframe: str):
+        """Sets the timeframe in localStorage and refreshes the page."""
+        if not timeframe:
+            return
+        try:
+            logging.info(f"Setting timeframe to '{timeframe}' via localStorage key 'cg_atinterval_v2main'.")
+            # Ensure timeframe is treated as a string in JS
+            js_script = f"localStorage.setItem('cg_atinterval_v2main', '{timeframe}');"
+            self.driver.execute_script(js_script)
+            logging.info("Refreshing page for timeframe change to take effect.")
+            self.driver.refresh()
+            # Wait briefly after refresh for page elements to reload, especially the iframe
+            time.sleep(3) # Adjust sleep time if needed
+        except WebDriverException as e:
+            logging.error(f"Failed to set timeframe to '{timeframe}' via localStorage: {e}")
+            # Decide if this should be a fatal error or just a warning
+            # raise CoinglassScraperError(f"Failed to set timeframe '{timeframe}'") from e # Option: Make it fatal
+            logging.warning("Proceeding without guaranteed timeframe change.") # Option: Continue
+
     def _find_and_switch_to_iframe(self):
         """Finds the TradingView iframe and switches context to it."""
         try:
@@ -180,15 +199,25 @@ class CoinglassScraper:
             logging.error(f"Error processing clipboard response: {e}")
             return response_string # Return original on other errors
 
-    def get_tradingview_image_url(self, ticker='Binance_BTCUSDT'):
+    def get_tradingview_image_url(self, ticker='Binance_BTCUSDT', timeframe: str | None = None):
         """
         Main method to orchestrate the scraping process and return the image URL.
+
+        Args:
+            ticker (str): The ticker symbol (e.g., 'Binance_BTCUSDT').
+            timeframe (str | None): The desired chart timeframe.
+                                     Example values: 'm1', 'm5', 'm15', 'm30', 'h1', 'h4', 'h24'.
+                                      If None, the default timeframe is used.
         """
         if not self.driver:
              self._setup_driver()
 
         try:
             self._navigate_to_page(ticker)
+            # Set timeframe *after* navigation and *before* interacting with iframe
+            if timeframe:
+                self._set_timeframe(timeframe)
+            # Now find the iframe (which might have reloaded)
             iframe_element = self._find_and_switch_to_iframe()
             # Initial switch back to default content before retry loop
             self.driver.switch_to.default_content()
@@ -234,12 +263,19 @@ class CoinglassScraper:
 # Example Usage:
 if __name__ == "__main__":
     ticker_to_capture = "Binance_BTCUSDT"
+    # Example timeframes: 'm1', 'm5', 'm15', 'm30', 'h1', 'h4', 'h24'
+    timeframe_to_capture = "m5" # Capture 5-Minute chart
     image_url = None
 
     # Using the context manager
     try:
+        # Set headless=False if you want to see the browser window
         with CoinglassScraper(headless=True) as scraper:
-            image_url = scraper.get_tradingview_image_url(ticker_to_capture)
+            logging.info(f"Attempting to capture {ticker_to_capture} on timeframe {timeframe_to_capture or 'default'}")
+            image_url = scraper.get_tradingview_image_url(
+                ticker=ticker_to_capture,
+                timeframe=timeframe_to_capture
+            )
     except CoinglassScraperError as e:
         logging.error(f"Failed to get image URL for {ticker_to_capture}: {e}")
     except Exception as e:
@@ -247,7 +283,7 @@ if __name__ == "__main__":
 
 
     if image_url:
-        print(f'Successfully retrieved Image URL for {ticker_to_capture}:')
+        print(f'Successfully retrieved Image URL for {ticker_to_capture} on timeframe {timeframe_to_capture or "default"}:')
         print(image_url)
     else:
-        print(f"Failed to retrieve image URL for {ticker_to_capture}.")
+        print(f"Failed to retrieve image URL for {ticker_to_capture} on timeframe {timeframe_to_capture or 'default'}.")
