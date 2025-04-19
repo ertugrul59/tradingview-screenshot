@@ -58,20 +58,6 @@ def capture_tradingview_screenshot(ticker='Binance_BTCUSDT'):
                 ActionChains(driver).key_down(Keys.ALT).key_down('s').key_up(Keys.ALT).key_up('s').perform()
                 print("Alt+S sent.")
 
-                try:
-                    debug_screenshot_path = f"debug_screenshot_after_alt_s_attempt_{attempt + 1}_{int(time.time())}.png"
-                    driver.switch_to.default_content() 
-                    time.sleep(0.1) 
-                    driver.save_screenshot(debug_screenshot_path)
-                    print(f"Saved debug screenshot to {debug_screenshot_path}")
-                    driver.switch_to.frame(iframe) 
-                except Exception as screenshot_err:
-                    print(f"Failed to save debug screenshot after Alt+S: {screenshot_err}")
-                    try:
-                       driver.switch_to.default_content()
-                    except:
-                        pass 
-
                 time.sleep(2) 
 
                 driver.switch_to.default_content()
@@ -110,25 +96,11 @@ def capture_tradingview_screenshot(ticker='Binance_BTCUSDT'):
             if clipboard_content and clipboard_content.strip() != '':
                 return clipboard_content
             else:
-                try:
-                    debug_screenshot_path = f"debug_screenshot_fail_{int(time.time())}.png"
-                    driver.save_screenshot(debug_screenshot_path)
-                    print(f"Saved debug screenshot to {debug_screenshot_path}")
-                except Exception as screenshot_err:
-                    print(f"Failed to save debug screenshot on failure: {screenshot_err}")
-                
                 print("Failed to get clipboard content after multiple attempts.")
                 raise Exception("Failed to get clipboard content after multiple attempts")
                 
         except Exception as interaction_err:
             print(f"Interaction Error: {str(interaction_err)}")
-            try:
-                debug_screenshot_path = f"debug_screenshot_error_{int(time.time())}.png"
-                driver.save_screenshot(debug_screenshot_path)
-                print(f"Saved debug screenshot to {debug_screenshot_path}")
-            except Exception as screenshot_err:
-                print(f"Failed to save debug screenshot during error handling: {screenshot_err}")
-            
             try:
                 if driver: 
                     driver.switch_to.default_content()
@@ -141,13 +113,6 @@ def capture_tradingview_screenshot(ticker='Binance_BTCUSDT'):
 
     except Exception as setup_err:
         print(f"Setup Error: {str(setup_err)}")
-        if 'driver' in locals() and driver:
-            try:
-                debug_screenshot_path = f"debug_screenshot_setup_error_{int(time.time())}.png"
-                driver.save_screenshot(debug_screenshot_path)
-                print(f"Saved debug screenshot to {debug_screenshot_path}")
-            except Exception as screenshot_err:
-                print(f"Failed to save debug screenshot during setup error handling: {screenshot_err}")
         return None 
     finally:
         print("Entering outer finally block for cleanup...")
