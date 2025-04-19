@@ -12,14 +12,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-def capture_tradingview_screenshot(ticker='NONE'):
+def capture_tradingview_screenshot(ticker='Binance_BTCUSDT'):
     chrome_options = Options()
     # chrome_options.add_argument('--headless') # Keep headless commented for debugging if needed
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--force-dark-mode')
     chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--window-size=1280,720")
+    chrome_options.add_argument("--window-size=1920,1080")
     
     driver = webdriver.Chrome(options=chrome_options)
 
