@@ -241,7 +241,7 @@ class CoinglassScraper:
             self.driver.add_cookie(cookie)
 
             # Set template in local storage
-            template_value = "5051095"
+            template_value = "5314147"
             logging.info(f"Setting localStorage item: cg_template_v2={template_value}")
             self.driver.execute_script(f"localStorage.setItem('cg_template_v2', '{template_value}');")
 
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     # Using the context manager
     try:
         # Set headless=False if you want to see the browser window
-        with CoinglassScraper(headless=False) as scraper:
+        with CoinglassScraper(headless=True) as scraper:
             logging.info(f"Attempting to capture {ticker_to_capture} on timeframe {timeframe_to_capture or 'default'}")
             image_url = scraper.get_tradingview_image_url(
                 ticker=ticker_to_capture,
