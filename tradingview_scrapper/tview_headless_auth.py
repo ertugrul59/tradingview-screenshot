@@ -23,7 +23,7 @@ class TradingViewScraper:
     # --- Constants ---
     TRADINGVIEW_BASE_URL = "https://www.tradingview.com"
     TRADINGVIEW_CHART_BASE_URL = "https://in.tradingview.com/chart/"
-    DEFAULT_CHART_PAGE_ID = "wHNtFSay"
+    DEFAULT_CHART_PAGE_ID = "SAaseURe"
     SESSION_ID_COOKIE = "sessionid"
     SESSION_ID_SIGN_COOKIE = "sessionid_sign"
     SESSION_ID_ENV_VAR = "TRADINGVIEW_SESSION_ID"
@@ -31,11 +31,11 @@ class TradingViewScraper:
     CLIPBOARD_READ_SCRIPT = "return navigator.clipboard.readText();"
     DEFAULT_WINDOW_SIZE = "1920,1080"
     MAX_RETRY_ATTEMPTS = 5 # Number of retries for clipboard read
-    NAV_WAIT_TIME = 5 # Time to wait after navigation (consider explicit waits)
+    NAV_WAIT_TIME = 10 # Time to wait after navigation (consider explicit waits)
     COOKIE_WAIT_TIME = 2 # Time to wait after navigating for cookies
     CLIPBOARD_WAIT_TIME = 3 # Time to wait after Alt+S for clipboard
 
-    def __init__(self, default_ticker: str = "BYBIT:BTCUSDT.P", default_interval: str = '5', headless: bool = True, window_size: str = DEFAULT_WINDOW_SIZE, chart_page_id: str = DEFAULT_CHART_PAGE_ID):
+    def __init__(self, default_ticker: str = "BYBIT:BTCUSDT.P", default_interval: str = '15', headless: bool = True, window_size: str = DEFAULT_WINDOW_SIZE, chart_page_id: str = DEFAULT_CHART_PAGE_ID):
         """Initializes the scraper configuration."""
         self.headless = headless
         self.window_size = window_size
@@ -290,7 +290,7 @@ if __name__ == "__main__":
 
     # --- Configuration for this specific run ---
     example_ticker = "BYBIT:ETHUSDT.P" # Or override the default
-    desired_tf = '15' # Or override the default
+    desired_tf = '5' # Or override the default
     run_headless = True
     # chart_id_override = "YOUR_SPECIFIC_CHART_ID" # Optional
 
