@@ -9,20 +9,7 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException, TimeoutException, NoSuchWindowException
 from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.chrome.options import Options
-# from selenium.webdriver.chrome.service import Service as ChromeService # Consider using Service
-# from webdriver_manager.chrome import ChromeDriverManager # Optional: for automatic driver management
 
-
-# --- Logging Setup ---
-# Moved basicConfig to main block to avoid potential multiple calls if module imported elsewhere
-# Consider a more robust logging setup if this becomes a library
-# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Load environment variables from .env file
-# Moved load_dotenv() call to the main execution block
-
-
-# --- Custom Exception ---
 class TradingViewScraperError(Exception):
     """Custom exception for TradingView scraper errors."""
     pass
@@ -36,30 +23,29 @@ class TradingViewScraper:
     # --- Constants ---
     TRADINGVIEW_BASE_URL = "https://www.tradingview.com"
     TRADINGVIEW_CHART_BASE_URL = "https://in.tradingview.com/chart/"
-    DEFAULT_CHART_PAGE_ID = "wHNtFSay" # Adjust if needed
+    DEFAULT_CHART_PAGE_ID = "wHNtFSay"
     SESSION_ID_COOKIE = "sessionid"
     SESSION_ID_SIGN_COOKIE = "sessionid_sign"
     SESSION_ID_ENV_VAR = "TRADINGVIEW_SESSION_ID"
     SESSION_ID_SIGN_ENV_VAR = "TRADINGVIEW_SESSION_ID_SIGN"
     CLIPBOARD_READ_SCRIPT = "return navigator.clipboard.readText();"
-    DEFAULT_TICKER = "NONE" # Consider removing if always provided
-    DEFAULT_INTERVAL = "15" # Consider removing if always provided
     DEFAULT_WINDOW_SIZE = "1920,1080"
     MAX_RETRY_ATTEMPTS = 5 # Number of retries for clipboard read
     NAV_WAIT_TIME = 5 # Time to wait after navigation (consider explicit waits)
     COOKIE_WAIT_TIME = 2 # Time to wait after navigating for cookies
     CLIPBOARD_WAIT_TIME = 3 # Time to wait after Alt+S for clipboard
 
-    def __init__(self, headless: bool = True, window_size: str = DEFAULT_WINDOW_SIZE, chart_page_id: str = DEFAULT_CHART_PAGE_ID):
+    def __init__(self, default_ticker: str = "BYBIT:BTCUSDT.P", default_interval: str = '5', headless: bool = True, window_size: str = DEFAULT_WINDOW_SIZE, chart_page_id: str = DEFAULT_CHART_PAGE_ID):
         """Initializes the scraper configuration."""
         self.headless = headless
         self.window_size = window_size
         self.chart_page_id = chart_page_id
+        self.default_ticker = default_ticker
+        self.default_interval = default_interval
         self.driver = None
-        # self.wait = None # WebDriverWait can be added here if needed
+        # self.wait = None
 
-        # Get logger for the instance
-        self.logger = logging.getLogger(__name__) # Use module's logger
+        self.logger = logging.getLogger(__name__)
         # Ensure logger is configured if run as script
         if not self.logger.handlers:
              logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -85,11 +71,7 @@ class TradingViewScraper:
         chrome_options.add_experimental_option("prefs", prefs)
 
         try:
-            # Optional: Use webdriver-manager
-            # service = ChromeService(ChromeDriverManager().install())
-            # self.driver = webdriver.Chrome(service=service, options=chrome_options)
             self.driver = webdriver.Chrome(options=chrome_options)
-            # self.wait = WebDriverWait(self.driver, SOME_TIMEOUT) # Initialize wait if used
             self.logger.info("WebDriver initialized successfully.")
         except WebDriverException as e:
             self.logger.error(f"Failed to initialize WebDriver: {e}")
@@ -114,7 +96,6 @@ class TradingViewScraper:
             time.sleep(self.COOKIE_WAIT_TIME) # Allow page load
 
             self.logger.info("Adding authentication cookies...")
-            # Combine adding cookies into a loop or keep separate for clarity
             if session_id_value:
                 self.driver.add_cookie({
                     'name': self.SESSION_ID_COOKIE,
@@ -134,9 +115,6 @@ class TradingViewScraper:
                     'httpOnly': True
                 })
             self.logger.info("Authentication cookies added (if found in environment).")
-            # Refresh or navigate again might be needed. Testing required.
-            # self.driver.refresh()
-            # time.sleep(self.COOKIE_WAIT_TIME)
             return True
         except (WebDriverException, TimeoutException) as e:
             self.logger.error(f"Error setting cookies or navigating to base URL: {e}")
@@ -219,9 +197,7 @@ class TradingViewScraper:
             if not self._set_auth_cookies():
                 self.logger.warning("Proceeding without guaranteed authentication (cookies not set).")
 
-            # Construct the chart URL
             chart_base_url = f"{self.TRADINGVIEW_CHART_BASE_URL}{self.chart_page_id}/"
-            # Ensure Ticker and Interval are properly URL-encoded if they contain special chars, though usually not needed for TV symbols/intervals
             url = f"{chart_base_url}?symbol={ticker}&interval={interval}"
 
             self._navigate_and_wait(url)
@@ -245,7 +221,7 @@ class TradingViewScraper:
         if not input_string:
             return None
 
-        logger = logging.getLogger(__name__) # Get logger for static method
+        logger = logging.getLogger(__name__)
 
         # Regex to find links like 'https://www.tradingview.com/x/...' or 'https://in.tradingview.com/x/...'
         pattern = r'https://(?:www\.|in\.)?tradingview\.com/x/([a-zA-Z0-9]+)/?'
@@ -266,7 +242,6 @@ class TradingViewScraper:
                  # This case should be rare if the match came from the input string
                  logger.warning(f"Pattern matched ID {match_id} ({matched_url}), but couldn't find exact link to replace in the current output string.")
 
-        # If the pattern didn't match at all, return the original string (or None if desired)
         if not found_match and re.search(r'tradingview\.com/x/', input_string):
              logger.warning(f"Input string contained 'tradingview.com/x/' but regex pattern '{pattern}' did not match. Returning original.")
         elif not found_match:
@@ -305,8 +280,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
 
-    # Load .env file - crucial for auth cookies
-    dotenv_path = os.path.join(os.path.dirname(__file__), '.env') # Look for .env in script's dir
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
     if os.path.exists(dotenv_path):
          load_dotenv(dotenv_path=dotenv_path)
          logger.info(".env file loaded.")
@@ -314,13 +288,11 @@ if __name__ == "__main__":
          logger.warning(".env file not found, authentication might fail.")
 
 
-    # --- Configuration ---
-    # Set desired interval here (e.g., '1', '5', '15', '60', '240', 'D', 'W')
-    desired_tf = '5'
-    # Example Ticker
-    example_ticker = "BYBIT:BTCUSDT.P" # Or "NSE:APOLLOTYRE", "NASDAQ:AAPL" etc.
-    run_headless = True # Set to False to watch the browser
-    # chart_id_override = "YOUR_SPECIFIC_CHART_ID" # Optional: Uncomment and set to override default
+    # --- Configuration for this specific run ---
+    example_ticker = "BYBIT:ETHUSDT.P" # Or override the default
+    desired_tf = '15' # Or override the default
+    run_headless = True
+    # chart_id_override = "YOUR_SPECIFIC_CHART_ID" # Optional
 
     logger.info(f"--- Starting TradingView Scraper for {example_ticker} ({desired_tf}) ---")
 
@@ -328,42 +300,46 @@ if __name__ == "__main__":
     image_url = None
 
     try:
-        # Use context manager for automatic setup and teardown
+        # Instantiate the scraper, potentially overriding defaults if needed
+        # Defaults from __init__ are used if not specified here.
         with TradingViewScraper(
             headless=run_headless
-            # , chart_page_id=chart_id_override # Optional override
+            # default_ticker=example_ticker, # Example of overriding
+            # default_interval=desired_tf,
+            # chart_page_id=chart_id_override
         ) as scraper:
             logger.info(f"Attempting to capture screenshot link...")
+            # Call get_screenshot_link with the specific ticker/interval for this run
             raw_link = scraper.get_screenshot_link(ticker=example_ticker, interval=desired_tf)
 
             if raw_link:
                 logger.info(f"Raw clipboard data received: {raw_link}")
-                image_url = TradingViewScraper.convert_link_to_image_url(raw_link) # Use static method
-                if image_url and image_url != raw_link : # Check if conversion happened
+                image_url = TradingViewScraper.convert_link_to_image_url(raw_link)
+                if image_url and image_url != raw_link :
                     logger.info(f"Converted image link: {image_url}")
-                    print(f"\nSuccess! Final Image Link:")
+                    print(f"\\nSuccess! Final Image Link:")
                     print(image_url)
                 elif image_url == raw_link:
                      logger.warning("Received link did not appear to be a standard share link or conversion failed.")
-                     print(f"\nReceived link (no conversion applied):")
+                     print(f"\\nReceived link (no conversion applied):")
                      print(raw_link)
-                else: # Should not happen if raw_link exists, but check anyway
+                else:
                     logger.error("Conversion returned None unexpectedly.")
-                    print(f"\nReceived link (conversion failed):")
+                    print(f"\\nReceived link (conversion failed):")
                     print(raw_link)
 
             else:
                 logger.error("Failed to capture screenshot link from clipboard.")
-                print("\nOperation failed: Could not retrieve link from clipboard.")
+                print("\\nOperation failed: Could not retrieve link from clipboard.")
 
     except TradingViewScraperError as e:
         logger.error(f"Scraping failed: {e}")
-        print(f"\nOperation failed: {e}")
+        print(f"\\nOperation failed: {e}")
     except ValueError as e:
          logger.error(f"Configuration error: {e}")
-         print(f"\nOperation failed due to configuration error: {e}")
+         print(f"\\nOperation failed due to configuration error: {e}")
     except Exception as e:
         logger.error(f"An unexpected error occurred during the process: {e}", exc_info=True)
-        print(f"\nAn unexpected error occurred. Check logs for details.")
+        print(f"\\nAn unexpected error occurred. Check logs for details.")
 
     logger.info(f"--- TradingView Scraper finished ---")
