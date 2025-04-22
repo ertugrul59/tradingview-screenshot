@@ -4,8 +4,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import WebDriverException
 import time
 import re
+import os # Added for environment variables
+from dotenv import load_dotenv # Added for .env support
 
-def capture_tradingview_screenshot(ticker='NONE', headless=True, window_size="1280,720"):
+# Load environment variables from .env file
+load_dotenv()
+
+def capture_tradingview_screenshot(ticker='NONE', headless=True, window_size="1920,1080"):
     # Login to TradingView
     chrome_options = Options()
     if headless:
@@ -32,8 +37,54 @@ def capture_tradingview_screenshot(ticker='NONE', headless=True, window_size="12
         print(f"Failed to initialize WebDriver: {e}")
         return None
 
-    # https://www.tradingview.com/chart/wHNtFSay/
-    url = "https://in.tradingview.com/chart/wHNtFSay/?symbol=" + str(ticker)
+    # TODO: Replace placeholders with your actual session ID and signature
+    # It's recommended to load these from environment variables for security
+    session_id_value = os.getenv("TRADINGVIEW_SESSION_ID")
+    session_id_sign_value = os.getenv("TRADINGVIEW_SESSION_ID_SIGN")
+
+    if not session_id_value or not session_id_sign_value:
+        print("Warning: TradingView session cookies not found. Ensure TRADINGVIEW_SESSION_ID and TRADINGVIEW_SESSION_ID_SIGN are set in your .env file or environment variables.")
+
+    try:
+        # Navigate to the base domain first to set cookies
+        base_url = "https://www.tradingview.com"
+        print(f"Navigating to {base_url} to set cookies...")
+        driver.get(base_url)
+        time.sleep(2) # Allow page to load slightly
+
+        # Add cookies for authentication
+        print("Adding authentication cookies...")
+        driver.add_cookie({
+            'name': 'sessionid',
+            'value': session_id_value,
+            'domain': '.tradingview.com', # Set domain to allow subdomain access
+            'path': '/',
+            'secure': True,
+            'httpOnly': True
+        })
+        driver.add_cookie({
+            'name': 'sessionid_sign',
+            'value': session_id_sign_value,
+            'domain': '.tradingview.com',
+            'path': '/',
+            'secure': True,
+            'httpOnly': True
+        })
+        print("Cookies added.")
+        # Refresh page or navigate again might be needed depending on the site
+        # driver.refresh()
+        # time.sleep(2)
+
+    except WebDriverException as e:
+        print(f"Error setting cookies or navigating to base URL: {e}")
+        if driver:
+            driver.quit()
+        return None
+
+    # Define the chart URL components
+    chart_page_id = "wHNtFSay" # Example chart page ID, adjust if needed
+    chart_base_url = f"https://in.tradingview.com/chart/{chart_page_id}/"
+    url = f"{chart_base_url}?symbol={str(ticker)}"
     
     clipboard = None
     try:
