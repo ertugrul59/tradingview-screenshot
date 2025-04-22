@@ -10,7 +10,7 @@ from dotenv import load_dotenv # Added for .env support
 # Load environment variables from .env file
 load_dotenv()
 
-def capture_tradingview_screenshot(ticker='NONE', headless=True, window_size="1920,1080"):
+def capture_tradingview_screenshot(ticker='NONE', interval='15', headless=True, window_size="1920,1080"):
     # Login to TradingView
     chrome_options = Options()
     if headless:
@@ -84,8 +84,11 @@ def capture_tradingview_screenshot(ticker='NONE', headless=True, window_size="19
     # Define the chart URL components
     chart_page_id = "wHNtFSay" # Example chart page ID, adjust if needed
     chart_base_url = f"https://in.tradingview.com/chart/{chart_page_id}/"
+    # Construct URL with symbol and optional interval
     url = f"{chart_base_url}?symbol={str(ticker)}"
-    
+    if interval:
+        url += f"&interval={interval}"
+
     clipboard = None
     try:
         # Navigate to the URL
@@ -131,7 +134,9 @@ def quit_browser(driver):
         print(f"Error quitting WebDriver: {e}")
 
 # Example usage:
-clipboard_data = capture_tradingview_screenshot("BYBIT:BTCUSDT.P", headless=True)
+# Set desired interval here (e.g., '1', '5', '15', '60', '240', 'D', 'W')
+desired_tf = '15'
+clipboard_data = capture_tradingview_screenshot("BYBIT:BTCUSDT.P", interval=desired_tf, headless=True)
 # https://in.tradingview.com/chart/wHNtFSay/?symbol=NSE:APOLLOTYRE
 
 def convert_tradingview_links(input_string):
